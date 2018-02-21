@@ -6,12 +6,12 @@
     <Version>1.0.0.0</Version>
     <Company />
     <Authors>Cyberboss</Authors>
-    <Description>Send packets to BYOND servers formatted for calling /world/Topic()</Description>
-    <PackageProjectUrl>https://Cyberboss.github.io/BYOND.TopicSender</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/Cyberboss/BYOND.TopicSender</RepositoryUrl>
+    <Description>Send packets to Byond servers formatted for calling /world/Topic()</Description>
+    <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Cyberboss/Byond.TopicSender</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
-    <PackageLicenseUrl>https://github.com/Cyberboss/BYOND.TopicSender/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/Cyberboss/Byond.TopicSender/LICENSE</PackageLicenseUrl>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <PackageTags>byond topic packet sender</PackageTags>

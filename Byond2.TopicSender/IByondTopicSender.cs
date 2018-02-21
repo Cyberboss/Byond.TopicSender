@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BYOND.TopicSender
+namespace Byond.TopicSender
 {
 	/// <summary>
 	/// Packet sender to create /world/Topic calls
@@ -48,7 +48,7 @@ namespace BYOND.TopicSender
 		Task<string> SendTopic(IPEndPoint endPoint, string queryString, CancellationToken cancellationToken = default);
 
 		/// <summary>
-		/// Properly escapes characters for a BYOND Topic() packet. See http://www.byond.com/docs/ref/info.html#/proc/list2params
+		/// Properly escapes characters for a Byond Topic() packet. See http://www.byond.com/docs/ref/info.html#/proc/list2params
 		/// </summary>
 		/// <param name="input">The <see cref="string"/> to sanitize</param>
 		/// <returns>The sanitized <see cref="string"/></returns>

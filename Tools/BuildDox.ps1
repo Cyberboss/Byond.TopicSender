@@ -12,7 +12,7 @@ if($publish_dox){
 	git clone -b gh-pages --single-branch "https://git@$github_url" "$doxdir" 2>$null
 	rm -r "$doxdir\*"
 }
-Add-Content "$bf\Tools\Doxyfile" "`nPROJECT_NUMBER = $version`nINPUT = $bf/BYOND.TopicSender`nOUTPUT_DIRECTORY = $doxdir"
+Add-Content "$bf\Tools\Doxyfile" "`nPROJECT_NUMBER = $version`nINPUT = $bf/Byond.TopicSender`nOUTPUT_DIRECTORY = $doxdir"
 
 doxygen.exe "$bf\Tools\Doxyfile"
 
