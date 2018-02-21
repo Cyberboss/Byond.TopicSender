@@ -16,7 +16,7 @@ cache:
 install:
   - choco install doxygen.portable
 build:
-  project: BYOND.TopicSender.sln
+  project: Byond.TopicSender.sln
   publish_nuget: true
 before_build:
   - dotnet restore

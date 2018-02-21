@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BYOND.TopicSender
+namespace Byond.TopicSender
 {
 	/// <inheritdoc />
 	public sealed class ByondTopicSender : IByondTopicSender
@@ -118,7 +118,7 @@ namespace BYOND.TopicSender
 				using (cancellationToken.Register(() => recieveTaskCompletionSource.SetCanceled()))
 					await recieveTaskCompletionSource.Task.ConfigureAwait(false);
 
-				//we need to properly disconnect the socket, otherwise BYOND can be an asshole about future sends
+				//we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
 				var disconnectTaskCompletionSource = new TaskCompletionSource<object>();
 				topicSender.BeginDisconnect(false, new AsyncCallback((asyncResult) =>
 				{
