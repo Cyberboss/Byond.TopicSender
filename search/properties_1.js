@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sendtimeout',['SendTimeout',['../class_b_y_o_n_d_1_1_topic_sender_1_1_byond_topic_sender.html#a44e5eeee3ff36048d90f2626db22c50d',1,'BYOND.TopicSender.ByondTopicSender.SendTimeout()'],['../interface_b_y_o_n_d_1_1_topic_sender_1_1_i_byond_topic_sender.html#a4aac6cb14881d2780a554f2d5cf7edd8',1,'BYOND.TopicSender.IByondTopicSender.SendTimeout()']]]
+  ['sendtimeout',['SendTimeout',['../class_byond_1_1_topic_sender_1_1_byond_topic_sender.html#a20ad8f429e458c7d381449c65d1852ed',1,'Byond.TopicSender.ByondTopicSender.SendTimeout()'],['../interface_byond_1_1_topic_sender_1_1_i_byond_topic_sender.html#aee756b2cc468b900d077d5e5415aeb38',1,'Byond.TopicSender.IByondTopicSender.SendTimeout()']]]
 ];
