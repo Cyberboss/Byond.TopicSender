@@ -10,7 +10,7 @@
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cyberboss/Byond.TopicSender</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
-    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <PackageReleaseNotes>Propercased the Byond namespace</PackageReleaseNotes>
     <PackageLicenseUrl>https://github.com/Cyberboss/Byond.TopicSender/blob/master/LICENSE</PackageLicenseUrl>
     <AssemblyVersion>1.1.0.0</AssemblyVersion>
     <FileVersion>1.1.0.0</FileVersion>
