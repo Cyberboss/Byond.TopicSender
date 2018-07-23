@@ -63,7 +63,11 @@ namespace Byond.TopicSender
 			packet[2] = lengthBytes[1];
 			packet[3] = lengthBytes[0];
 
-			using (var topicSender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+			using (var topicSender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+			{
+				SendTimeout = SendTimeout,
+				ReceiveTimeout = ReceiveTimeout
+			})
 			{
 				//connect
 				var connectTaskCompletionSource = new TaskCompletionSource<object>();

@@ -10,11 +10,11 @@ namespace Byond.TopicSender
 	public interface IByondTopicSender
 	{
 		/// <summary>
-		/// The timeout for the send operation
+		/// The timeout for the send operation. Maps directly to <see cref="System.Net.Sockets.Socket.SendTimeout"/>
 		/// </summary>
 		int SendTimeout { get; set; }
 		/// <summary>
-		/// The timeout for the receive operation
+		/// The timeout for the receive operation. Maps directly to <see cref="System.Net.Sockets.Socket.ReceiveTimeout"/>
 		/// </summary>
 		int ReceiveTimeout { get; set; }
 
