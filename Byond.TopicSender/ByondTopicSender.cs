@@ -60,8 +60,10 @@ namespace Byond.TopicSender
 
 			var lengthBytes = BitConverter.GetBytes((ushort)FinalLength);
 
-			packet[2] = lengthBytes[1];
-			packet[3] = lengthBytes[0];
+			var lilEndy = BitConverter.IsLittleEndian;
+
+			packet[2] = lengthBytes[lilEndy ? 1 : 0];
+			packet[3] = lengthBytes[lilEndy ? 0 : 1];
 
 			using (var topicSender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
 			{

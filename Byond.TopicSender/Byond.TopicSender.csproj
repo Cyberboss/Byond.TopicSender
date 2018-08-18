@@ -3,17 +3,17 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <Company />
     <Authors>Cyberboss</Authors>
     <Description>Send packets to Byond servers formatted for calling /world/Topic()</Description>
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cyberboss/Byond.TopicSender</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
-    <PackageReleaseNotes>Propercased the Byond namespace</PackageReleaseNotes>
+    <PackageReleaseNotes>Fix for big endian systems</PackageReleaseNotes>
     <PackageLicenseUrl>https://github.com/Cyberboss/Byond.TopicSender/blob/master/LICENSE</PackageLicenseUrl>
-    <AssemblyVersion>1.1.0.1</AssemblyVersion>
-    <FileVersion>1.1.0.1</FileVersion>
+    <AssemblyVersion>1.1.2.0</AssemblyVersion>
+    <FileVersion>1.1.2.0</FileVersion>
     <PackageTags>byond topic packet sender</PackageTags>
   </PropertyGroup>
 
