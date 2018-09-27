@@ -87,6 +87,7 @@ namespace Byond.TopicSender
 				}), null);
 				using (cancellationToken.Register(() => connectTaskCompletionSource.SetCanceled()))
 					await connectTaskCompletionSource.Task.ConfigureAwait(false);
+				cancellationToken.ThrowIfCancellationRequested();
 
 				//send
 				for (var offset = 0; offset < packet.Length;)
@@ -105,6 +106,7 @@ namespace Byond.TopicSender
 					}), null);
 					using (cancellationToken.Register(() => sendTaskCompletionSource.SetCanceled()))
 						offset += await sendTaskCompletionSource.Task.ConfigureAwait(false);
+					cancellationToken.ThrowIfCancellationRequested();
 				}
 
 				//receive
@@ -123,6 +125,7 @@ namespace Byond.TopicSender
 				}), null);
 				using (cancellationToken.Register(() => recieveTaskCompletionSource.SetCanceled()))
 					await recieveTaskCompletionSource.Task.ConfigureAwait(false);
+				cancellationToken.ThrowIfCancellationRequested();
 
 				//we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
 				var disconnectTaskCompletionSource = new TaskCompletionSource<object>();
@@ -140,6 +143,7 @@ namespace Byond.TopicSender
 				}), null);
 				using (cancellationToken.Register(() => disconnectTaskCompletionSource.SetCanceled()))
 					await disconnectTaskCompletionSource.Task.ConfigureAwait(false);
+				cancellationToken.ThrowIfCancellationRequested();
 
 				//parse
 				var raw_string = Encoding.ASCII.GetString(returnedData).TrimEnd(new char[] { (char)0 }).Trim();
