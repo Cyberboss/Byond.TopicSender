@@ -78,14 +78,14 @@ namespace Byond.TopicSender
 					try
 					{
 						topicSender.EndConnect(asyncResult);
-						connectTaskCompletionSource.SetResult(null);
+						connectTaskCompletionSource.TrySetResult(null);
 					}
 					catch (Exception e)
 					{
-						connectTaskCompletionSource.SetException(e);
+						connectTaskCompletionSource.TrySetException(e);
 					}
 				}), null);
-				using (cancellationToken.Register(() => connectTaskCompletionSource.SetCanceled()))
+				using (cancellationToken.Register(() => connectTaskCompletionSource.TrySetCanceled()))
 					await connectTaskCompletionSource.Task.ConfigureAwait(false);
 				cancellationToken.ThrowIfCancellationRequested();
 
@@ -97,14 +97,14 @@ namespace Byond.TopicSender
 					{
 						try
 						{
-							sendTaskCompletionSource.SetResult(topicSender.EndSend(asyncResult));
+							sendTaskCompletionSource.TrySetResult(topicSender.EndSend(asyncResult));
 						}
 						catch (Exception e)
 						{
-							sendTaskCompletionSource.SetException(e);
+							sendTaskCompletionSource.TrySetException(e);
 						}
 					}), null);
-					using (cancellationToken.Register(() => sendTaskCompletionSource.SetCanceled()))
+					using (cancellationToken.Register(() => sendTaskCompletionSource.TrySetCanceled()))
 						offset += await sendTaskCompletionSource.Task.ConfigureAwait(false);
 					cancellationToken.ThrowIfCancellationRequested();
 				}
@@ -116,14 +116,14 @@ namespace Byond.TopicSender
 				{
 					try
 					{
-						recieveTaskCompletionSource.SetResult(topicSender.EndReceive(asyncResult));
+						recieveTaskCompletionSource.TrySetResult(topicSender.EndReceive(asyncResult));
 					}
 					catch (Exception e)
 					{
-						recieveTaskCompletionSource.SetException(e);
+						recieveTaskCompletionSource.TrySetException(e);
 					}
 				}), null);
-				using (cancellationToken.Register(() => recieveTaskCompletionSource.SetCanceled()))
+				using (cancellationToken.Register(() => recieveTaskCompletionSource.TrySetCanceled()))
 					await recieveTaskCompletionSource.Task.ConfigureAwait(false);
 				cancellationToken.ThrowIfCancellationRequested();
 
@@ -134,14 +134,14 @@ namespace Byond.TopicSender
 					try
 					{
 						topicSender.EndDisconnect(asyncResult);
-						disconnectTaskCompletionSource.SetResult(null);
+						disconnectTaskCompletionSource.TrySetResult(null);
 					}
 					catch (Exception e)
 					{
-						disconnectTaskCompletionSource.SetException(e);
+						disconnectTaskCompletionSource.TrySetException(e);
 					}
 				}), null);
-				using (cancellationToken.Register(() => disconnectTaskCompletionSource.SetCanceled()))
+				using (cancellationToken.Register(() => disconnectTaskCompletionSource.TrySetCanceled()))
 					await disconnectTaskCompletionSource.Task.ConfigureAwait(false);
 				cancellationToken.ThrowIfCancellationRequested();
 
