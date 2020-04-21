@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Byond.TopicSender
 {
@@ -158,7 +159,7 @@ namespace Byond.TopicSender
 		{
 			if (input == null)
 				throw new ArgumentNullException(nameof(input));
-			return input.Replace("%", "%25").Replace("=", "%3d").Replace(";", "%3b").Replace("&", "%26").Replace("+", "%2b");
+			return HttpUtility.UrlEncode(input);
 		}
 	}
 }

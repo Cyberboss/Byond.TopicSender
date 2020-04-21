@@ -48,7 +48,7 @@ namespace Byond.TopicSender
 		Task<string> SendTopic(IPEndPoint endPoint, string queryString, CancellationToken cancellationToken = default);
 
 		/// <summary>
-		/// Properly escapes characters for a Byond Topic() packet. See http://www.byond.com/docs/ref/info.html#/proc/list2params
+		/// Properly escapes characters for a Byond Topic() packet. Performs URL encoding. See http://www.byond.com/docs/ref/info.html#/proc/list2params
 		/// </summary>
 		/// <param name="input">The <see cref="string"/> to sanitize</param>
 		/// <returns>The sanitized <see cref="string"/></returns>
