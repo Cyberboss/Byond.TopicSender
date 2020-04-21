@@ -10,16 +10,18 @@
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cyberboss/Byond.TopicSender</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
-    <PackageReleaseNotes>Fix for big endian systems</PackageReleaseNotes>
+    <PackageReleaseNotes>.NET Standard 2.1.\nImprove string sanitization.</PackageReleaseNotes>
     <PackageLicenseUrl>https://github.com/Cyberboss/Byond.TopicSender/blob/master/LICENSE</PackageLicenseUrl>
     <PackageTags>byond topic packet sender</PackageTags>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <DocumentationFile>bin\Release\netstandard2.0\Cyberboss.AspNetCore.AsyncInitializer.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\netstandard2.1\Byond.TopicSender.xml</DocumentationFile>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 

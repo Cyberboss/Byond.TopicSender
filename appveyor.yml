@@ -18,6 +18,8 @@ install:
 build:
   project: Byond.TopicSender.sln
   publish_nuget: true
+  publish_nuget_symbols: true
+  use_snupkg_format: true
 before_build:
   - dotnet restore
 after_build:
