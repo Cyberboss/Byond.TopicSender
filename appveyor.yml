@@ -26,7 +26,7 @@ after_build:
 deploy:
   - provider: NuGet
     api_key:
-      secure: 3JemuFtOQPTZcV5rrQFPJZulRzumBT//ip9b2Rfb/a1/yLrjGWTwtIQBjrsXKY6L
+      secure: wEJOUfUHOuMcQO3zLNq9nlFVERI8l9PW7QMpQ1wD7o+5XHW8SugsGLlWR+hz1GCm
     artifact: /.*\.nupkg/
     on:
       NugetDeploy: "Do it."
