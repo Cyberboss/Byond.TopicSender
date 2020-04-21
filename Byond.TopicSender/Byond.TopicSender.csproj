@@ -13,6 +13,7 @@
     <PackageReleaseNotes>Fix for big endian systems</PackageReleaseNotes>
     <PackageLicenseUrl>https://github.com/Cyberboss/Byond.TopicSender/blob/master/LICENSE</PackageLicenseUrl>
     <PackageTags>byond topic packet sender</PackageTags>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

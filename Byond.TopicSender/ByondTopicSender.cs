@@ -18,17 +18,17 @@ namespace Byond.TopicSender
 		public int ReceiveTimeout { get; set; }
 
 		/// <inheritdoc />
-		public async Task<string> SendTopic(string destinationServer, ushort port, string queryString, CancellationToken cancellationToken = default)
+		public async Task<string?> SendTopic(string destinationServer, string queryString, ushort port, CancellationToken cancellationToken = default)
 		{
 			if (destinationServer == null)
 				throw new ArgumentNullException(nameof(destinationServer));
 			var hostEntries = await Dns.GetHostAddressesAsync(destinationServer).ConfigureAwait(false);
 			//pick the first IPV4 entry
-			return await SendTopic(hostEntries.First(x => x.AddressFamily == AddressFamily.InterNetwork), port, queryString, cancellationToken).ConfigureAwait(false);
+			return await SendTopic(hostEntries.First(x => x.AddressFamily == AddressFamily.InterNetwork), queryString, port, cancellationToken).ConfigureAwait(false);
 		}
 
 		/// <inheritdoc />
-		public Task<string> SendTopic(IPAddress address, ushort port, string queryString, CancellationToken cancellationToken = default)
+		public Task<string?> SendTopic(IPAddress address, string queryString, ushort port, CancellationToken cancellationToken = default)
 		{
 			if (address == null)
 				throw new ArgumentNullException(nameof(address));
@@ -36,7 +36,7 @@ namespace Byond.TopicSender
 		}
 
 		/// <inheritdoc />
-		public async Task<string> SendTopic(IPEndPoint endPoint, string queryString, CancellationToken cancellationToken = default)
+		public async Task<string?> SendTopic(IPEndPoint endPoint, string queryString, CancellationToken cancellationToken = default)
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException(nameof(endPoint));
@@ -73,7 +73,7 @@ namespace Byond.TopicSender
 			})
 			{
 				//connect
-				var connectTaskCompletionSource = new TaskCompletionSource<object>();
+				var connectTaskCompletionSource = new TaskCompletionSource<object?>();
 				topicSender.BeginConnect(endPoint, new AsyncCallback((asyncResult) =>
 				{
 					try
@@ -129,7 +129,7 @@ namespace Byond.TopicSender
 				cancellationToken.ThrowIfCancellationRequested();
 
 				//we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
-				var disconnectTaskCompletionSource = new TaskCompletionSource<object>();
+				var disconnectTaskCompletionSource = new TaskCompletionSource<object?>();
 				topicSender.BeginDisconnect(false, new AsyncCallback((asyncResult) =>
 				{
 					try
