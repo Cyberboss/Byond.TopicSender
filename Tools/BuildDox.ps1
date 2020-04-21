@@ -14,7 +14,7 @@ if($publish_dox){
 }
 Add-Content "$bf\Tools\Doxyfile" "`nPROJECT_NUMBER = $version`nINPUT = $bf/Byond.TopicSender`nOUTPUT_DIRECTORY = $doxdir"
 
-doxygen.exe "$bf\Tools\Doxyfile"
+&"C:\Program Files\doxygen\bin\doxygen.exe" "$bf\Tools\Doxyfile"
 
 if($publish_dox){
 	cd $doxdir
