@@ -60,10 +60,10 @@ namespace Byond.TopicSender
 					var floatBytes = new byte[4];
 
 					var lilEndy = BitConverter.IsLittleEndian;
-					floatBytes[lilEndy ? 3 : 0] = rawData[5];
-					floatBytes[lilEndy ? 2 : 1] = rawData[6];
-					floatBytes[lilEndy ? 1 : 2] = rawData[7];
-					floatBytes[lilEndy ? 0 : 3] = rawData[8];
+					floatBytes[lilEndy ? 0 : 3] = rawData[5];
+					floatBytes[lilEndy ? 1 : 2] = rawData[6];
+					floatBytes[lilEndy ? 2 : 1] = rawData[7];
+					floatBytes[lilEndy ? 3 : 0] = rawData[8];
 
 					FloatData = BitConverter.ToSingle(floatBytes);
 
