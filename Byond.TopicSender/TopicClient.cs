@@ -24,6 +24,11 @@ namespace Byond.TopicSender
 		/// </summary>
 		readonly ILogger<TopicClient> logger;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TopicClient"/> <see langword="class"/>.
+		/// </summary>
+		/// <param name="socketParameters">The <see cref="SocketParameters"/> to use.</param>
+		/// <param name="logger">The optional <see cref="ILogger"/> to use.</param>
 		public TopicClient(SocketParameters socketParameters, ILogger<TopicClient>? logger = null)
 		{
 			this.socketParameters = socketParameters ?? throw new ArgumentNullException(nameof(socketParameters));
