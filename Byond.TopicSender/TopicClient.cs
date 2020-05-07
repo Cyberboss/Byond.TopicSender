@@ -119,7 +119,7 @@ namespace Byond.TopicSender
 			for (int offset = 0, chunkCount = 1; offset < sendPacket.Length; ++chunkCount)
 			{
 				if (chunkCount > 1)
-					logger.LogTrace("Send chunk {0}, offset {1}", chunkCount + 1, offset);
+					logger.LogTrace("Send chunk {0}, offset {1}", chunkCount, offset);
 
 				var sendTaskCompletionSource = new TaskCompletionSource<int>();
 				socket.BeginSend(sendPacket, offset, sendPacket.Length - offset, SocketFlags.None, new AsyncCallback((asyncResult) =>
@@ -148,7 +148,7 @@ namespace Byond.TopicSender
 			for (int chunkCount = 1; receiveOffset < returnedData.Length; ++chunkCount)
 			{
 				if (chunkCount > 1)
-					logger.LogTrace("Receive chunk {0}, offset {1}", chunkCount + 1, receiveOffset);
+					logger.LogTrace("Receive chunk {0}, offset {1}", chunkCount, receiveOffset);
 
 				socket.BeginReceive(returnedData, receiveOffset, returnedData.Length - receiveOffset, SocketFlags.None, new AsyncCallback((asyncResult) =>
 				{
