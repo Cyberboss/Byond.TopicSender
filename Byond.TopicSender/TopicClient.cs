@@ -24,6 +24,37 @@ namespace Byond.TopicSender
 		/// </summary>
 		readonly ILogger<TopicClient> logger;
 
+		private static async Task<TResult> AsyncSocketOperation<TResult>(
+			Func<AsyncCallback, IAsyncResult> start,
+			Func<IAsyncResult, TResult> end,
+			TimeSpan timeout,
+			CancellationToken cancellationToken)
+		{
+			var tcs = new TaskCompletionSource<TResult>();
+			start(new AsyncCallback(asyncResult =>
+			{
+				try
+				{
+					var result = end(asyncResult);
+					tcs.TrySetResult(result);
+				}
+				catch (Exception ex)
+				{
+					tcs.TrySetException(ex);
+				}
+			}));
+
+			using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			cts.CancelAfter(timeout);
+			cancellationToken = cts.Token;
+			TResult result;
+			using (cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken)))
+				result = await tcs.Task.ConfigureAwait(false);
+
+			cancellationToken.ThrowIfCancellationRequested();
+			return result;
+		}
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TopicClient"/> <see langword="class"/>.
 		/// </summary>
@@ -84,35 +115,34 @@ namespace Byond.TopicSender
 			sendPacket[2] = sendLengthBytes[lilEndy ? 1 : 0];
 			sendPacket[3] = sendLengthBytes[lilEndy ? 0 : 1];
 
-			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
-			{
-				SendTimeout = socketParameters.SendTimeout,
-				ReceiveTimeout = socketParameters.ReceiveTimeout
-			};
+			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+			var connectTimeout = socketParameters.ConnectTimeout;
+			var sendTimeout = socketParameters.SendTimeout;
+			var receiveTimeout = socketParameters.ReceiveTimeout;
+			var disconnectTimeout = socketParameters.DisconnectTimeout;
 
 			logger.LogDebug("Export to {0}: {1}", endPoint, queryString);
 			logger.LogTrace(
-				"Send Timeout: {0}, Recv Timeout: {1}, Raw data: {2}",
-				socket.SendTimeout,
-				socket.ReceiveTimeout,
+				"Timeouts: Connect: {0}, Send: {1}, Recv: {2}, Disc: {3}, Raw data: {4}",
+				connectTimeout,
+				sendTimeout,
+				receiveTimeout,
+				disconnectTimeout,
 				Convert.ToBase64String(sendPacket));
 
 			// connect
-			var connectTaskCompletionSource = new TaskCompletionSource<object?>();
-			socket.BeginConnect(endPoint, new AsyncCallback((asyncResult) =>
-			{
-				try
+			await AsyncSocketOperation<object?>(
+				callback => socket.BeginConnect(endPoint, callback, null),
+				asyncResult =>
 				{
 					socket.EndConnect(asyncResult);
-					connectTaskCompletionSource.TrySetResult(null);
-				}
-				catch (Exception e)
-				{
-					connectTaskCompletionSource.TrySetException(e);
-				}
-			}), null);
-			using (cancellationToken.Register(() => connectTaskCompletionSource.TrySetCanceled()))
-				await connectTaskCompletionSource.Task.ConfigureAwait(false);
+					return null;
+				},
+				connectTimeout,
+				cancellationToken)
+				.ConfigureAwait(false);
+
 			cancellationToken.ThrowIfCancellationRequested();
 
 			// send
@@ -121,27 +151,14 @@ namespace Byond.TopicSender
 				if (chunkCount > 1)
 					logger.LogTrace("Send chunk {0}, offset {1}", chunkCount, offset);
 
-				var sendTaskCompletionSource = new TaskCompletionSource<int>();
-				socket.BeginSend(sendPacket, offset, sendPacket.Length - offset, SocketFlags.None, new AsyncCallback((asyncResult) =>
-				{
-					try
-					{
-						sendTaskCompletionSource.TrySetResult(socket.EndSend(asyncResult));
-					}
-					catch (Exception e)
-					{
-						sendTaskCompletionSource.TrySetException(e);
-					}
-				}), null);
-				using (cancellationToken.Register(() => sendTaskCompletionSource.TrySetCanceled()))
-					offset += await sendTaskCompletionSource.Task.ConfigureAwait(false);
-
-				cancellationToken.ThrowIfCancellationRequested();
+				offset += await AsyncSocketOperation(
+					callback => socket.BeginSend(sendPacket, offset, sendPacket.Length + offset, SocketFlags.None, callback, null),
+					asyncResult => socket.EndSend(asyncResult),
+					socketParameters.SendTimeout,
+					cancellationToken).ConfigureAwait(false);
 			}
 
 			// receive
-			var recieveTaskCompletionSource = new TaskCompletionSource<int>();
-
 			var returnedData = new byte[5];
 			var receiveOffset = 0;
 			bool checkedHeader = false;
@@ -150,25 +167,14 @@ namespace Byond.TopicSender
 				if (chunkCount > 1)
 					logger.LogTrace("Receive chunk {0}, offset {1}", chunkCount, receiveOffset);
 
-				socket.BeginReceive(returnedData, receiveOffset, returnedData.Length - receiveOffset, SocketFlags.None, new AsyncCallback((asyncResult) =>
-				{
-					try
-					{
-						recieveTaskCompletionSource.TrySetResult(socket.EndReceive(asyncResult));
-					}
-					catch (Exception e)
-					{
-						recieveTaskCompletionSource.TrySetException(e);
-					}
-				}), null);
-
-				int read;
-				using (cancellationToken.Register(() => recieveTaskCompletionSource.TrySetCanceled()))
-					read = await recieveTaskCompletionSource.Task.ConfigureAwait(false);
-				cancellationToken.ThrowIfCancellationRequested();
+				var read = await AsyncSocketOperation(
+					callback => socket.BeginReceive(returnedData, receiveOffset, returnedData.Length - receiveOffset, SocketFlags.None, callback, null),
+					asyncResult => socket.EndReceive(asyncResult),
+					receiveTimeout,
+					cancellationToken)
+					.ConfigureAwait(false);
 
 				receiveOffset += read;
-
 				if (read == 0)
 				{
 					if (receiveOffset < returnedData.Length)
@@ -191,22 +197,16 @@ namespace Byond.TopicSender
 			}
 
 			//we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
-			var disconnectTaskCompletionSource = new TaskCompletionSource<object?>();
-			socket.BeginDisconnect(false, new AsyncCallback((asyncResult) =>
-			{
-				try
+			await AsyncSocketOperation<object?>(
+				callback => socket.BeginDisconnect(false, callback, null),
+				asyncResult =>
 				{
 					socket.EndDisconnect(asyncResult);
-					disconnectTaskCompletionSource.TrySetResult(null);
-				}
-				catch (Exception e)
-				{
-					disconnectTaskCompletionSource.TrySetException(e);
-				}
-			}), null);
-			using (cancellationToken.Register(() => disconnectTaskCompletionSource.TrySetCanceled()))
-				await disconnectTaskCompletionSource.Task.ConfigureAwait(false);
-			cancellationToken.ThrowIfCancellationRequested();
+					return null;
+				},
+				disconnectTimeout,
+				cancellationToken)
+				.ConfigureAwait(false);
 
 			if(returnedData.Length > receiveOffset)
 				returnedData = returnedData.Take(receiveOffset).ToArray();

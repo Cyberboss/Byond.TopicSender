@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Threading.Tasks;
 
 namespace Byond.TopicSender.Tests
@@ -13,8 +14,10 @@ namespace Byond.TopicSender.Tests
 			var logger = loggerFactory.CreateLogger<TopicClient>();
 			return new TopicClient(new SocketParameters
 			{
-				SendTimeout = 10000,
-				ReceiveTimeout = 10000
+				SendTimeout = TimeSpan.FromSeconds(10),
+				ReceiveTimeout = TimeSpan.FromSeconds(10),
+				ConnectTimeout = TimeSpan.FromSeconds(10),
+				DisconnectTimeout = TimeSpan.FromSeconds(10)
 			}, logger);
 		}
 

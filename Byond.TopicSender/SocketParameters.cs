@@ -1,4 +1,6 @@
-﻿namespace Byond.TopicSender
+﻿using System;
+
+namespace Byond.TopicSender
 {
 	/// <summary>
 	/// <see cref="System.Net.Sockets.Socket"/> parameters used by the <see cref="TopicClient"/>/
@@ -6,13 +8,23 @@
 	public sealed class SocketParameters
 	{
 		/// <summary>
-		/// The timeout for the send operation. Maps directly to <see cref="System.Net.Sockets.Socket.SendTimeout"/>
+		/// The timeout for the send operation.
 		/// </summary>
-		public int SendTimeout { get; set; }
+		public TimeSpan SendTimeout { get; set; }
 
 		/// <summary>
-		/// The timeout for the receive operation. Maps directly to <see cref="System.Net.Sockets.Socket.ReceiveTimeout"/>
+		/// The timeout for the receive operation.
 		/// </summary>
-		public int ReceiveTimeout { get; set; }
+		public TimeSpan ReceiveTimeout { get; set; }
+
+		/// <summary>
+		/// The timeout for the receive operation.
+		/// </summary>
+		public TimeSpan ConnectTimeout { get; set; }
+
+		/// <summary>
+		/// The timeout for the disconnect operation.
+		/// </summary>
+		public TimeSpan DisconnectTimeout { get; set; }
 	}
 }

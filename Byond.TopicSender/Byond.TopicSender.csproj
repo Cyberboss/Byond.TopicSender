@@ -3,10 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>3.0.1</Version>
+    <Version>4.0.0</Version>
     <Company />
     <Authors>Cyberboss</Authors>
-    <Description>Send packets to Byond servers formatted for calling /world/Topic()</Description>
+    <Description>Added connect/disconnect timeouts and fixed timeouts not firing.</Description>
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cyberboss/Byond.TopicSender</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
