@@ -162,17 +162,39 @@ namespace Byond.TopicSender
 			var returnedData = new byte[5];
 			var receiveOffset = 0;
 			bool checkedHeader = false;
+			bool skipNextChunkLog = true;
 			for (int chunkCount = 1; receiveOffset < returnedData.Length; ++chunkCount)
 			{
-				if (chunkCount > 1)
+				if (!skipNextChunkLog)
 					logger.LogTrace("Receive chunk {0}, offset {1}", chunkCount, receiveOffset);
+				else
+					skipNextChunkLog = false;
 
-				var read = await AsyncSocketOperation(
-					callback => socket.BeginReceive(returnedData, receiveOffset, returnedData.Length - receiveOffset, SocketFlags.None, callback, null),
-					asyncResult => socket.EndReceive(asyncResult),
-					receiveTimeout,
-					cancellationToken)
-					.ConfigureAwait(false);
+				int read;
+				try
+				{
+					read = await AsyncSocketOperation(
+						callback => socket.BeginReceive(
+							returnedData,
+							receiveOffset,
+							returnedData.Length - receiveOffset,
+							SocketFlags.None,
+							callback,
+							null),
+						asyncResult => socket.EndReceive(asyncResult),
+						receiveTimeout,
+						cancellationToken)
+						.ConfigureAwait(false);
+				}
+				catch (SocketException ex)
+				{
+					// BYOND closes the socket after replying *sometimes*
+					if ((SocketError)ex.ErrorCode == SocketError.ConnectionReset
+						&& receiveOffset == returnedData.Length)
+						break;
+
+					throw;
+				}
 
 				receiveOffset += read;
 				if (read == 0)
@@ -191,22 +213,33 @@ namespace Byond.TopicSender
 						throw new InvalidOperationException("Expected header content length to have a value!");
 
 					var expectedLength = (ushort)(TopicResponseHeader.HeaderLength + header.ContentLength.Value);
+					logger.LogTrace("Header indicates packet length of {0}", expectedLength);
 					Array.Resize(ref returnedData, expectedLength);
+
 					checkedHeader = true;
+					skipNextChunkLog = true;
 				}
 			}
 
-			//we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
-			await AsyncSocketOperation<object?>(
-				callback => socket.BeginDisconnect(false, callback, null),
-				asyncResult =>
+			if (socket.Connected)
+				try
 				{
-					socket.EndDisconnect(asyncResult);
-					return null;
-				},
-				disconnectTimeout,
-				cancellationToken)
-				.ConfigureAwait(false);
+					//we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
+					await AsyncSocketOperation<object?>(
+						callback => socket.BeginDisconnect(false, callback, null),
+						asyncResult =>
+						{
+							socket.EndDisconnect(asyncResult);
+							return null;
+						},
+						disconnectTimeout,
+						cancellationToken)
+						.ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					logger.LogDebug("Disconnect exception:{0}{1}", Environment.NewLine, ex);
+				}
 
 			if(returnedData.Length > receiveOffset)
 				returnedData = returnedData.Take(receiveOffset).ToArray();
