@@ -41,12 +41,12 @@ namespace Byond.TopicSender
 			switch (ResponseType)
 			{
 				case TopicResponseType.StringResponse:
-					if (!ContentLength.HasValue)
+					if (!PacketLength.HasValue)
 						throw new InvalidOperationException("Expected header content length to have a value!");
 
 					StringData = Encoding
 						.ASCII
-						.GetString(rawData[HeaderLength..ContentLength.Value])
+						.GetString(rawData[HeaderLength..(PacketLength.Value - 1)])
 						.TrimEnd(
 							new char[]
 							{
@@ -54,7 +54,7 @@ namespace Byond.TopicSender
 							});
 					break;
 				case TopicResponseType.FloatResponse:
-					if (ContentLength < 4)
+					if (PacketLength < 4)
 						return;
 
 					var floatBytes = new byte[4];

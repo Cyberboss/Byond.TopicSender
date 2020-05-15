@@ -20,7 +20,7 @@ namespace Byond.TopicSender
 		/// <summary>
 		/// The length of the content in the header.
 		/// </summary>
-		public ushort? ContentLength { get; }
+		public ushort? PacketLength { get; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TopicResponseHeader"/> <see langword="class"/>.
@@ -42,9 +42,9 @@ namespace Byond.TopicSender
 
 			var intContentLength = Math.Max(BitConverter.ToUInt16(receiveLengthBytes) + HeaderLength, 0);
 			if (intContentLength > UInt16.MaxValue)
-				ContentLength = 0;
+				PacketLength = 0;
 			else
-				ContentLength = (ushort)intContentLength;
+				PacketLength = (ushort)intContentLength;
 
 			if (data.Length < HeaderLength)
 				return;

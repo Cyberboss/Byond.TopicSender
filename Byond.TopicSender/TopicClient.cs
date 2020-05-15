@@ -46,12 +46,14 @@ namespace Byond.TopicSender
 
 			using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 			cts.CancelAfter(timeout);
-			cancellationToken = cts.Token;
+
+			var ourCancellationToken = cts.Token;
+
 			TResult result;
-			using (cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken)))
+			using (ourCancellationToken.Register(() => tcs.TrySetCanceled(ourCancellationToken)))
 				result = await tcs.Task.ConfigureAwait(false);
 
-			cancellationToken.ThrowIfCancellationRequested();
+			ourCancellationToken.ThrowIfCancellationRequested();
 			return result;
 		}
 
@@ -152,99 +154,106 @@ namespace Byond.TopicSender
 					logger.LogTrace("Send chunk {0}, offset {1}", chunkCount, offset);
 
 				offset += await AsyncSocketOperation(
-					callback => socket.BeginSend(sendPacket, offset, sendPacket.Length + offset, SocketFlags.None, callback, null),
+					callback => socket.BeginSend(sendPacket, offset, sendPacket.Length - offset, SocketFlags.None, callback, null),
 					asyncResult => socket.EndSend(asyncResult),
 					socketParameters.SendTimeout,
 					cancellationToken).ConfigureAwait(false);
 			}
 
 			// receive
-			var returnedData = new byte[5];
+			var returnedData = new byte[TopicResponseHeader.HeaderLength];
 			var receiveOffset = 0;
-			bool checkedHeader = false;
-			bool skipNextChunkLog = true;
-			for (int chunkCount = 1; receiveOffset < returnedData.Length; ++chunkCount)
+			try
 			{
-				if (!skipNextChunkLog)
-					logger.LogTrace("Receive chunk {0}, offset {1}", chunkCount, receiveOffset);
-				else
-					skipNextChunkLog = false;
+				TopicResponseHeader? header = null;
+				bool skipNextChunkLog = true;
 
-				int read;
-				try
+				for (int chunkCount = 1; receiveOffset < returnedData.Length - 1; ++chunkCount)
 				{
-					read = await AsyncSocketOperation(
-						callback => socket.BeginReceive(
-							returnedData,
-							receiveOffset,
-							returnedData.Length - receiveOffset,
-							SocketFlags.None,
-							callback,
-							null),
-						asyncResult => socket.EndReceive(asyncResult),
-						receiveTimeout,
-						cancellationToken)
-						.ConfigureAwait(false);
-				}
-				catch (SocketException ex)
-				{
-					// BYOND closes the socket after replying *sometimes*
-					if ((SocketError)ex.ErrorCode == SocketError.ConnectionReset
-						&& receiveOffset == returnedData.Length)
+					if (skipNextChunkLog)
+						skipNextChunkLog = false;
+					else
+						logger.LogTrace("Receive chunk {0}, offset {1}", chunkCount, receiveOffset);
+
+					int read;
+					try
+					{
+						read = await AsyncSocketOperation(
+							callback => socket.BeginReceive(
+								returnedData,
+								receiveOffset,
+								returnedData.Length - receiveOffset,
+								SocketFlags.None,
+								callback,
+								null),
+							asyncResult => socket.EndReceive(asyncResult),
+							receiveTimeout,
+							cancellationToken)
+							.ConfigureAwait(false);
+					}
+					catch (SocketException ex)
+					{
+						// BYOND closes the socket after replying *sometimes*
+						if ((SocketError)ex.ErrorCode == SocketError.ConnectionReset
+							&& receiveOffset == returnedData.Length)
+							break;
+
+						throw;
+					}
+
+					receiveOffset += read;
+					if (read == 0)
+					{
+						if (receiveOffset < returnedData.Length)
+							logger.LogTrace("Zero bytes read at offset {0} before expected length of {1}.", receiveOffset, returnedData.Length);
 						break;
+					}
 
-					throw;
+					if (header == null && receiveOffset >= TopicResponseHeader.HeaderLength)
+					{
+						// we now have the header
+						header = new TopicResponseHeader(returnedData);
+
+						if (!header.PacketLength.HasValue)
+							throw new InvalidOperationException("Expected header content length to have a value!");
+
+						var expectedLength = header.PacketLength.Value;
+						logger.LogTrace("Header indicates packet length of {0}", expectedLength);
+						Array.Resize(ref returnedData, expectedLength);
+
+						skipNextChunkLog = true;
+					}
 				}
 
-				receiveOffset += read;
-				if (read == 0)
-				{
-					if (receiveOffset < returnedData.Length)
-						logger.LogTrace("Zero bytes read at offset {0} before expected length of {1}.", receiveOffset, returnedData.Length);
-					break;
-				}
+				if (socket.Connected)
+					try
+					{
+						//we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
+						await AsyncSocketOperation<object?>(
+							callback => socket.BeginDisconnect(false, callback, null),
+							asyncResult =>
+							{
+								socket.EndDisconnect(asyncResult);
+								return null;
+							},
+							disconnectTimeout,
+							cancellationToken)
+							.ConfigureAwait(false);
+					}
+					catch (Exception ex)
+					{
+						logger.LogDebug("Disconnect exception:{0}{1}", Environment.NewLine, ex);
+					}
+			}
+			finally
+			{
+				if (returnedData.Length > receiveOffset)
+					Array.Resize(ref returnedData, receiveOffset);
 
-				if (!checkedHeader && receiveOffset >= TopicResponseHeader.HeaderLength)
-				{
-					// we now have the header
-					var header = new TopicResponseHeader(returnedData);
-
-					if (!header.ContentLength.HasValue)
-						throw new InvalidOperationException("Expected header content length to have a value!");
-
-					var expectedLength = (ushort)(TopicResponseHeader.HeaderLength + header.ContentLength.Value);
-					logger.LogTrace("Header indicates packet length of {0}", expectedLength);
-					Array.Resize(ref returnedData, expectedLength);
-
-					checkedHeader = true;
-					skipNextChunkLog = true;
-				}
+				var b64 = Convert.ToBase64String(returnedData);
+				logger.LogTrace("Received: {0}", b64);
 			}
 
-			if (socket.Connected)
-				try
-				{
-					//we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
-					await AsyncSocketOperation<object?>(
-						callback => socket.BeginDisconnect(false, callback, null),
-						asyncResult =>
-						{
-							socket.EndDisconnect(asyncResult);
-							return null;
-						},
-						disconnectTimeout,
-						cancellationToken)
-						.ConfigureAwait(false);
-				}
-				catch (Exception ex)
-				{
-					logger.LogDebug("Disconnect exception:{0}{1}", Environment.NewLine, ex);
-				}
-
-			if(returnedData.Length > receiveOffset)
-				returnedData = returnedData.Take(receiveOffset).ToArray();
-
-			logger.LogTrace("Received: {0}", Convert.ToBase64String(returnedData));
 			return new TopicResponse(returnedData);
 		}
 
