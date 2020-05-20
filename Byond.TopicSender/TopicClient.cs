@@ -98,7 +98,7 @@ namespace Byond.TopicSender
 			var stringPacket = new StringBuilder();
 			stringPacket.Append('\x00', 8);
 			if (queryString.Length == 0 || queryString[0] != '?')
-				queryString = '?' + queryString;
+				stringPacket.Append('?');
 			stringPacket.Append(queryString);
 			stringPacket.Append('\x00');
 
@@ -125,13 +125,14 @@ namespace Byond.TopicSender
 			var disconnectTimeout = socketParameters.DisconnectTimeout;
 
 			logger.LogDebug("Export to {0}: {1}", endPoint, queryString);
+			var packetBase64 = Convert.ToBase64String(sendPacket);
 			logger.LogTrace(
 				"Timeouts: Connect: {0}, Send: {1}, Recv: {2}, Disc: {3}, Raw data: {4}",
 				connectTimeout,
 				sendTimeout,
 				receiveTimeout,
 				disconnectTimeout,
-				Convert.ToBase64String(sendPacket));
+				packetBase64);
 
 			// connect
 			await AsyncSocketOperation<object?>(
