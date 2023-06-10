@@ -23,7 +23,7 @@ namespace Byond.TopicSender
 		public ushort? PacketLength { get; }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="TopicResponseHeader"/> <see langword="class"/>.
+		/// Initializes a new instance of the <see cref="TopicResponseHeader"/> class.
 		/// </summary>
 		/// <param name="data">The header <see cref="byte"/>s.</param>
 		public TopicResponseHeader(ReadOnlySpan<byte> data)
@@ -51,15 +51,11 @@ namespace Byond.TopicSender
 
 			const byte StringResponse = 0x06;
 			const byte FloatResponse = 0x2a;
-			switch (data[4])
-			{
-				case StringResponse:
-					ResponseType = TopicResponseType.StringResponse;
-					break;
-				case FloatResponse:
-					ResponseType = TopicResponseType.FloatResponse;
-					break;
-			}
+			var responseType = data[4];
+			if (responseType == StringResponse)
+				ResponseType = TopicResponseType.StringResponse;
+			else if (responseType == FloatResponse)
+				ResponseType = TopicResponseType.FloatResponse;
 		}
 	}
 }

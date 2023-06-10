@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using System;
+﻿using System;
+using System.Buffers.Binary;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Byond.TopicSender
 {
@@ -22,47 +25,14 @@ namespace Byond.TopicSender
 		/// <summary>
 		/// The <see cref="ILogger"/> for the <see cref="TopicClient"/>.
 		/// </summary>
-		readonly ILogger<TopicClient> logger;
-
-		private static async Task<TResult> AsyncSocketOperation<TResult>(
-			Func<AsyncCallback, IAsyncResult> start,
-			Func<IAsyncResult, TResult> end,
-			TimeSpan timeout,
-			CancellationToken cancellationToken)
-		{
-			var tcs = new TaskCompletionSource<TResult>();
-			start(new AsyncCallback(asyncResult =>
-			{
-				try
-				{
-					var result = end(asyncResult);
-					tcs.TrySetResult(result);
-				}
-				catch (Exception ex)
-				{
-					tcs.TrySetException(ex);
-				}
-			}));
-
-			using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-			cts.CancelAfter(timeout);
-
-			var ourCancellationToken = cts.Token;
-
-			TResult result;
-			using (ourCancellationToken.Register(() => tcs.TrySetCanceled(ourCancellationToken)))
-				result = await tcs.Task.ConfigureAwait(false);
-
-			ourCancellationToken.ThrowIfCancellationRequested();
-			return result;
-		}
+		readonly ILogger logger;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="TopicClient"/> <see langword="class"/>.
+		/// Initializes a new instance of the <see cref="TopicClient"/> class.
 		/// </summary>
 		/// <param name="socketParameters">The <see cref="SocketParameters"/> to use.</param>
 		/// <param name="logger">The optional <see cref="ILogger"/> to use.</param>
-		public TopicClient(SocketParameters socketParameters, ILogger<TopicClient>? logger = null)
+		public TopicClient(SocketParameters socketParameters, ILogger? logger = null)
 		{
 			this.socketParameters = socketParameters ?? throw new ArgumentNullException(nameof(socketParameters));
 			this.logger = logger ?? new NullLogger<TopicClient>();
@@ -73,8 +43,9 @@ namespace Byond.TopicSender
 		{
 			if (destinationServer == null)
 				throw new ArgumentNullException(nameof(destinationServer));
-			var hostEntries = await Dns.GetHostAddressesAsync(destinationServer).ConfigureAwait(false);
-			//pick the first IPV4 entry
+			var hostEntries = await Dns.GetHostAddressesAsync(destinationServer, cancellationToken).ConfigureAwait(false);
+
+			// pick the first IPV4 entry
 			return await SendTopic(hostEntries.First(x => x.AddressFamily == AddressFamily.InterNetwork), queryString, port, cancellationToken).ConfigureAwait(false);
 		}
 
@@ -94,71 +65,69 @@ namespace Byond.TopicSender
 			if (queryString == null)
 				throw new ArgumentNullException(nameof(queryString));
 
-			//prepare
-			var stringPacket = new StringBuilder();
-			stringPacket.Append('\x00', 8);
-			if (queryString.Length == 0 || queryString[0] != '?')
-				stringPacket.Append('?');
-			stringPacket.Append(queryString);
-			stringPacket.Append('\x00');
-
-			var fullString = stringPacket.ToString();
-
-			var sendPacket = Encoding.UTF8.GetBytes(fullString);
-			sendPacket[1] = 0x83;
-			var FinalLength = sendPacket.Length - 4;
-			if (FinalLength > UInt16.MaxValue)
-				throw new ArgumentOutOfRangeException(nameof(queryString), queryString, "Topic too long!");
-
-			var sendLengthBytes = BitConverter.GetBytes((ushort)FinalLength);
-
-			var lilEndy = BitConverter.IsLittleEndian;
-
-			sendPacket[2] = sendLengthBytes[lilEndy ? 1 : 0];
-			sendPacket[3] = sendLengthBytes[lilEndy ? 0 : 1];
-
 			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-			var connectTimeout = socketParameters.ConnectTimeout;
-			var sendTimeout = socketParameters.SendTimeout;
-			var receiveTimeout = socketParameters.ReceiveTimeout;
-			var disconnectTimeout = socketParameters.DisconnectTimeout;
-
-			logger.LogDebug("Export to {0}: {1}", endPoint, queryString);
-			var packetBase64 = Convert.ToBase64String(sendPacket);
-			logger.LogTrace(
-				"Timeouts: Connect: {0}, Send: {1}, Recv: {2}, Disc: {3}, Raw data: {4}",
-				connectTimeout,
-				sendTimeout,
-				receiveTimeout,
-				disconnectTimeout,
-				packetBase64);
-
-			// connect
-			await AsyncSocketOperation<object?>(
-				callback => socket.BeginConnect(endPoint, callback, null),
-				asyncResult =>
-				{
-					socket.EndConnect(asyncResult);
-					return null;
-				},
-				connectTimeout,
-				cancellationToken)
-				.ConfigureAwait(false);
-
-			cancellationToken.ThrowIfCancellationRequested();
-
-			// send
-			for (int offset = 0, chunkCount = 1; offset < sendPacket.Length; ++chunkCount)
 			{
-				if (chunkCount > 1)
-					logger.LogTrace("Send chunk {0}, offset {1}", chunkCount, offset);
+				// prepare
+				var needsQueryToken = queryString.Length == 0 || queryString[0] != '?';
 
-				offset += await AsyncSocketOperation(
-					callback => socket.BeginSend(sendPacket, offset, sendPacket.Length - offset, SocketFlags.None, callback, null),
-					asyncResult => socket.EndSend(asyncResult),
-					socketParameters.SendTimeout,
-					cancellationToken).ConfigureAwait(false);
+				var queryStringByteLength = Encoding.UTF8.GetByteCount(queryString);
+				if (needsQueryToken)
+					++queryStringByteLength;
+
+				const int ZerosPaddingCount = 5;
+
+				const int BytesBeforeString = 1 // padding
+					+ 1 // signature
+					+ 2 // length header
+					+ ZerosPaddingCount;
+
+				var totalLength = BytesBeforeString
+					+ queryStringByteLength
+					+ 1; // null terminator
+
+				var lengthHeader = totalLength - 4;
+				if (lengthHeader > UInt16.MaxValue)
+					throw new ArgumentOutOfRangeException(nameof(queryString), queryString, "Topic too long!");
+
+				await using var dataStream = new MemoryStream(totalLength);
+				await using (var writer = new BinaryWriter(dataStream, Encoding.UTF8, true))
+				{
+					writer.Write((byte)0);
+					writer.Write((byte)0x83);
+
+					// #RIP-lilEndy
+					writer.Write(BinaryPrimitives.ReverseEndianness((ushort)lengthHeader));
+
+					for (var i = 0; i < ZerosPaddingCount; ++i)
+						writer.Write((byte)0);
+
+					if (queryString.Length == 0 || queryString[0] != '?')
+						writer.Write('?');
+
+					writer.Seek(queryStringByteLength, SeekOrigin.Current);
+					writer.Write((byte)0);
+				}
+
+				var sendBuffer = dataStream.GetBuffer();
+				Encoding.UTF8.GetBytes(queryString, 0, queryString.Length, sendBuffer, BytesBeforeString);
+
+				// connect
+				using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+				connectCts.CancelAfter(socketParameters.ConnectTimeout);
+				await socket.ConnectAsync(endPoint, connectCts.Token);
+
+				// send
+				using var sendCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+				sendCts.CancelAfter(socketParameters.SendTimeout);
+				for (int offset = 0, chunkCount = 1; offset < dataStream.Length; ++chunkCount)
+				{
+					logger.LogTrace("Send chunk {chunk}, offset {offset}", chunkCount, offset);
+
+					offset += await socket.SendAsync(
+						new ReadOnlyMemory<byte>(sendBuffer, offset, (int)(dataStream.Length - offset)),
+						SocketFlags.None,
+						sendCts.Token);
+				}
 			}
 
 			// receive
@@ -167,37 +136,30 @@ namespace Byond.TopicSender
 			try
 			{
 				TopicResponseHeader? header = null;
-				bool skipNextChunkLog = true;
 
+				using var receiveCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+				receiveCts.CancelAfter(socketParameters.ReceiveTimeout);
 				for (int chunkCount = 1; receiveOffset < returnedData.Length - 1; ++chunkCount)
 				{
-					if (skipNextChunkLog)
-						skipNextChunkLog = false;
-					else
-						logger.LogTrace("Receive chunk {0}, offset {1}", chunkCount, receiveOffset);
+					logger.LogTrace("Receive chunk {chunk}, offset {receiveOffset}", chunkCount, receiveOffset);
 
 					int read;
 					try
 					{
-						read = await AsyncSocketOperation(
-							callback => socket.BeginReceive(
-								returnedData,
-								receiveOffset,
-								returnedData.Length - receiveOffset,
-								SocketFlags.None,
-								callback,
-								null),
-							asyncResult => socket.EndReceive(asyncResult),
-							receiveTimeout,
-							cancellationToken)
-							.ConfigureAwait(false);
+						read = await socket.ReceiveAsync(
+							new Memory<byte>(returnedData, receiveOffset, returnedData.Length - receiveOffset),
+							SocketFlags.None,
+							receiveCts.Token);
 					}
 					catch (SocketException ex)
 					{
 						// BYOND closes the socket after replying *sometimes*
 						if ((SocketError)ex.ErrorCode == SocketError.ConnectionReset
 							&& receiveOffset == returnedData.Length)
+						{
+							logger.LogDebug(ex, "BYOND reset connection after receive");
 							break;
+						}
 
 						throw;
 					}
@@ -206,7 +168,7 @@ namespace Byond.TopicSender
 					if (read == 0)
 					{
 						if (receiveOffset < returnedData.Length)
-							logger.LogTrace("Zero bytes read at offset {0} before expected length of {1}.", receiveOffset, returnedData.Length);
+							logger.LogDebug("Zero bytes read at offset {receiveOffset} before expected length of {expectedLength}.", receiveOffset, returnedData.Length);
 						break;
 					}
 
@@ -219,40 +181,29 @@ namespace Byond.TopicSender
 							throw new InvalidOperationException("Expected header content length to have a value!");
 
 						var expectedLength = header.PacketLength.Value;
-						logger.LogTrace("Header indicates packet length of {0}", expectedLength);
+						logger.LogTrace("Header indicates packet length of {expectedLength}", expectedLength);
 						Array.Resize(ref returnedData, expectedLength);
-
-						skipNextChunkLog = true;
 					}
 				}
 
 				if (socket.Connected)
 					try
 					{
-						//we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
-						await AsyncSocketOperation<object?>(
-							callback => socket.BeginDisconnect(false, callback, null),
-							asyncResult =>
-							{
-								socket.EndDisconnect(asyncResult);
-								return null;
-							},
-							disconnectTimeout,
-							cancellationToken)
-							.ConfigureAwait(false);
+						// we need to properly disconnect the socket, otherwise Byond can be an asshole about future sends
+						logger.LogTrace("Disconnect");
+						using var disconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+						disconnectCts.CancelAfter(socketParameters.DisconnectTimeout);
+						await socket.DisconnectAsync(false, disconnectCts.Token).ConfigureAwait(false);
 					}
-					catch (Exception ex)
+					catch (Exception ex) when (ex is not OperationCanceledException)
 					{
-						logger.LogDebug("Disconnect exception:{0}{1}", Environment.NewLine, ex);
+						logger.LogDebug(ex, "Disconnect exception!");
 					}
 			}
 			finally
 			{
 				if (returnedData.Length > receiveOffset)
 					Array.Resize(ref returnedData, receiveOffset);
-
-				var b64 = Convert.ToBase64String(returnedData);
-				logger.LogTrace("Received: {0}", b64);
 			}
 
 			return new TopicResponse(returnedData);
@@ -263,6 +214,7 @@ namespace Byond.TopicSender
 		{
 			if (input == null)
 				throw new ArgumentNullException(nameof(input));
+
 			return HttpUtility.UrlEncode(input);
 		}
 	}

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading.Tasks;
@@ -8,17 +8,31 @@ namespace Byond.TopicSender.Tests
 	[TestClass]
 	public class IntegrationTests
 	{
+		static ILoggerFactory loggerFactory;
+
+		[ClassInitialize]
+		public static void Initialize(TestContext _)
+		{
+			loggerFactory = LoggerFactory.Create(builder =>
+			{
+				builder.AddConsole();
+				builder.AddDebug();
+				builder.SetMinimumLevel(LogLevel.Trace);
+			});
+		}
+
+		[ClassCleanup]
+		public static void Cleanup() => loggerFactory.Dispose();
+
 		static ITopicClient CreateTopicSender()
 		{
-			using var loggerFactory = LoggerFactory.Create(builder => builder.AddDebug());
-			var logger = loggerFactory.CreateLogger<TopicClient>();
 			return new TopicClient(new SocketParameters
 			{
 				SendTimeout = TimeSpan.FromSeconds(10),
 				ReceiveTimeout = TimeSpan.FromSeconds(10),
 				ConnectTimeout = TimeSpan.FromSeconds(10),
 				DisconnectTimeout = TimeSpan.FromSeconds(10)
-			}, logger);
+			}, loggerFactory.CreateLogger("Test Topic Client"));
 		}
 
 
@@ -36,7 +50,7 @@ namespace Byond.TopicSender.Tests
 		{
 			var topicSender = CreateTopicSender();
 
-			var data = "expecting_this=response";
+			var data = "hello";
 			var response = await topicSender.SendTopic("localhost", $"?{data}", 61612);
 			Assert.IsNotNull(response);
 			Assert.IsFalse(response.FloatData.HasValue);

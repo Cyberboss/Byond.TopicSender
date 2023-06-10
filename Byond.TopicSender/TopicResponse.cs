@@ -30,7 +30,7 @@ namespace Byond.TopicSender
 		readonly byte[] rawData;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="TopicResponse"/> <see langword="class"/>.
+		/// Initializes a new instance of the <see cref="TopicResponse"/> class.
 		/// </summary>
 		/// <param name="rawData">The value of <see cref="RawData"/>.</param>
 		public TopicResponse(byte[] rawData)
@@ -44,14 +44,11 @@ namespace Byond.TopicSender
 					if (!PacketLength.HasValue)
 						throw new InvalidOperationException("Expected header content length to have a value!");
 
+					var stringLength = PacketLength.Value - 1;
 					StringData = Encoding
-						.ASCII
-						.GetString(rawData[HeaderLength..(PacketLength.Value - 1)])
-						.TrimEnd(
-							new char[]
-							{
-								(char)0 
-							});
+						.UTF8
+						.GetString(rawData[HeaderLength..stringLength])
+						.TrimEnd((char)0);
 					break;
 				case TopicResponseType.FloatResponse:
 					if (PacketLength < 4)
@@ -68,6 +65,10 @@ namespace Byond.TopicSender
 					FloatData = BitConverter.ToSingle(floatBytes);
 
 					break;
+				case TopicResponseType.UnknownResponse:
+					break;
+				default:
+					throw new InvalidOperationException($"Invalid value for ResponseType: {ResponseType}");
 			}
 		}
 	}

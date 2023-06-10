@@ -18,6 +18,6 @@
 		/// <summary>
 		/// <see cref="float"/> response type.
 		/// </summary>
-		FloatResponse
+		FloatResponse,
 	}
 }
