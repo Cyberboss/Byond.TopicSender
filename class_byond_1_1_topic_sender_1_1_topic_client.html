@@ -410,7 +410,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">  101</span>                    <span class="keywordflow">for</span> (var i = 0; i &lt; ZerosPaddingCount; ++i)</div>
 <div class="line"><span class="lineno">  102</span>                        writer.Write((<span class="keywordtype">byte</span>)0);</div>
 <div class="line"><span class="lineno">  103</span> </div>
-<div class="line"><span class="lineno">  104</span>                    <span class="keywordflow">if</span> (queryString.Length == 0 || queryString[0] != <span class="charliteral">&#39;?&#39;</span>)</div>
+<div class="line"><span class="lineno">  104</span>                    <span class="keywordflow">if</span> (needsQueryToken)</div>
 <div class="line"><span class="lineno">  105</span>                        writer.Write(<span class="charliteral">&#39;?&#39;</span>);</div>
 <div class="line"><span class="lineno">  106</span> </div>
 <div class="line"><span class="lineno">  107</span>                    writer.Seek(queryStringByteLength, SeekOrigin.Current);</div>
