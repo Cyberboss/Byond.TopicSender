@@ -3,13 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>6.0.0</Version>
+    <Version>6.0.1</Version>
     <Authors>Dominion</Authors>
     <Description>Fixed packet parsing.</Description>
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cyberboss/Byond.TopicSender</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
-    <PackageReleaseNotes>Updated to .NET 6.0. Now accepts generic logger. Removed mutability of SocketParameters.</PackageReleaseNotes>
+    <PackageReleaseNotes>Fix superfluous recalculation of if a topic needs the query token written.</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>byond topic packet sender</PackageTags>
     <IncludeSymbols>true</IncludeSymbols>

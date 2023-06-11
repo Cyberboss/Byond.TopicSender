@@ -101,7 +101,7 @@ namespace Byond.TopicSender
 					for (var i = 0; i < ZerosPaddingCount; ++i)
 						writer.Write((byte)0);
 
-					if (queryString.Length == 0 || queryString[0] != '?')
+					if (needsQueryToken)
 						writer.Write('?');
 
 					writer.Seek(queryStringByteLength, SeekOrigin.Current);
