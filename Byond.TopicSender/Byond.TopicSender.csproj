@@ -3,13 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>7.0.0</Version>
+    <Version>7.0.1</Version>
     <Authors>Dominion</Authors>
-    <Description>Fixed packet parsing.</Description>
+    <Description>Library for asynchronously sending valid topic strings to /world/Topic() in BYOND servers.</Description>
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cyberboss/Byond.TopicSender</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
-    <PackageReleaseNotes>Fix more DreamDaemon instabilities when continuously sending topics.</PackageReleaseNotes>
+    <PackageReleaseNotes>Fix Linux socket options.</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>byond topic packet sender</PackageTags>
     <IncludeSymbols>true</IncludeSymbols>

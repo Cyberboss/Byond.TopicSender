@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -155,6 +156,7 @@ namespace Byond.TopicSender
 			try
 			{
 				TopicResponseHeader? header = null;
+				var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
 				using var receiveCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 				receiveCts.CancelAfter(socketParameters.ReceiveTimeout);
@@ -167,7 +169,7 @@ namespace Byond.TopicSender
 					{
 						read = await socket.ReceiveAsync(
 							new Memory<byte>(returnedData, receiveOffset, returnedData.Length - receiveOffset),
-							header == null
+							isWindows && header == null
 								? SocketFlags.Partial
 								: SocketFlags.None,
 							receiveCts.Token);
