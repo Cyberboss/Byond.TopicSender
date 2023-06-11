@@ -71,21 +71,37 @@ namespace Byond.TopicSender
 				var needsQueryToken = queryString.Length == 0 || queryString[0] != '?';
 
 				var queryStringByteLength = Encoding.UTF8.GetByteCount(queryString);
-				if (needsQueryToken)
-					++queryStringByteLength;
 
-				const int ZerosPaddingCount = 5;
+				/* https://discord.com/channels/484170914754330625/484170915253321734/1117238275963367465
+					// this one's big endian!
+					struct byond_msg_frame {
+						short unsigned id;
+						short unsigned len;
+					} __attribute__((packed));
 
-				const int BytesBeforeString = 1 // padding
-					+ 1 // signature
+					struct byond_msg_topic {
+						// if flags isn't 0 then there's more to this struct!
+						char unsigned flags;
+						int unsigned port;
+						char msg[];
+					} __attribute__((packed));
+				*/
+
+				const int TopicMessageHeaderLength = 1 // flags
+					+ 4; // port
+
+				var bytesBeforeString = 2 // id
 					+ 2 // length header
-					+ ZerosPaddingCount;
+					+ TopicMessageHeaderLength;
 
-				var totalLength = BytesBeforeString
+				if (needsQueryToken)
+					++bytesBeforeString;
+
+				var totalLength = bytesBeforeString
 					+ queryStringByteLength
 					+ 1; // null terminator
 
-				var lengthHeader = totalLength - 4;
+				var lengthHeader = totalLength - TopicResponseHeader.HeaderLength;
 				if (lengthHeader > UInt16.MaxValue)
 					throw new ArgumentOutOfRangeException(nameof(queryString), queryString, "Topic too long!");
 
@@ -98,7 +114,7 @@ namespace Byond.TopicSender
 					// #RIP-lilEndy
 					writer.Write(BinaryPrimitives.ReverseEndianness((ushort)lengthHeader));
 
-					for (var i = 0; i < ZerosPaddingCount; ++i)
+					for (var i = 0; i < TopicMessageHeaderLength; ++i)
 						writer.Write((byte)0);
 
 					if (needsQueryToken)
@@ -109,7 +125,7 @@ namespace Byond.TopicSender
 				}
 
 				var sendBuffer = dataStream.GetBuffer();
-				Encoding.UTF8.GetBytes(queryString, 0, queryString.Length, sendBuffer, BytesBeforeString);
+				Encoding.UTF8.GetBytes(queryString, 0, queryString.Length, sendBuffer, bytesBeforeString);
 
 				// connect
 				using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -130,6 +146,9 @@ namespace Byond.TopicSender
 				}
 			}
 
+			// DO NOT DO THIS, it breaks things
+			// socket.Shutdown(SocketShutdown.Send);
+
 			// receive
 			var returnedData = new byte[TopicResponseHeader.HeaderLength];
 			var receiveOffset = 0;
@@ -139,7 +158,7 @@ namespace Byond.TopicSender
 
 				using var receiveCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 				receiveCts.CancelAfter(socketParameters.ReceiveTimeout);
-				for (int chunkCount = 1; receiveOffset < returnedData.Length - 1; ++chunkCount)
+				for (var chunkCount = 1; receiveOffset < returnedData.Length; ++chunkCount)
 				{
 					logger.LogTrace("Receive chunk {chunk}, offset {receiveOffset}", chunkCount, receiveOffset);
 
@@ -148,7 +167,9 @@ namespace Byond.TopicSender
 					{
 						read = await socket.ReceiveAsync(
 							new Memory<byte>(returnedData, receiveOffset, returnedData.Length - receiveOffset),
-							SocketFlags.None,
+							header == null
+								? SocketFlags.Partial
+								: SocketFlags.None,
 							receiveCts.Token);
 					}
 					catch (SocketException ex)
@@ -177,10 +198,7 @@ namespace Byond.TopicSender
 						// we now have the header
 						header = new TopicResponseHeader(returnedData);
 
-						if (!header.PacketLength.HasValue)
-							throw new InvalidOperationException("Expected header content length to have a value!");
-
-						var expectedLength = header.PacketLength.Value;
+						var expectedLength = header.PacketLength;
 						logger.LogTrace("Header indicates packet length of {expectedLength}", expectedLength);
 						Array.Resize(ref returnedData, expectedLength);
 					}

@@ -10,6 +10,11 @@ namespace Byond.TopicSender
 	public sealed class TopicResponse : TopicResponseHeader
 	{
 		/// <summary>
+		/// The <see cref="TopicResponseType"/> of the header.
+		/// </summary>
+		public TopicResponseType ResponseType { get; }
+
+		/// <summary>
 		/// The returned <see cref="string"/> if decodable.
 		/// </summary>
 		public string? StringData { get; }
@@ -38,22 +43,29 @@ namespace Byond.TopicSender
 		{
 			this.rawData = rawData;
 
+			if (PacketLength >= 1)
+			{
+				const byte StringResponse = 0x06;
+				const byte FloatResponse = 0x2a;
+
+				var responseType = rawData[4];
+				if (responseType == StringResponse)
+					ResponseType = TopicResponseType.StringResponse;
+				if (responseType == FloatResponse && PacketLength >= 5)
+					ResponseType = TopicResponseType.FloatResponse;
+			}
+
 			switch (ResponseType)
 			{
 				case TopicResponseType.StringResponse:
-					if (!PacketLength.HasValue)
-						throw new InvalidOperationException("Expected header content length to have a value!");
-
-					var stringLength = PacketLength.Value - 1;
+					var stringStartIndex = HeaderLength + 1;
+					var stringEndIndex = PacketLength - 1;
 					StringData = Encoding
 						.UTF8
-						.GetString(rawData[HeaderLength..stringLength])
+						.GetString(rawData[stringStartIndex..stringEndIndex])
 						.TrimEnd((char)0);
 					break;
 				case TopicResponseType.FloatResponse:
-					if (PacketLength < 4)
-						return;
-
 					var floatBytes = new byte[4];
 
 					var lilEndy = BitConverter.IsLittleEndian;
