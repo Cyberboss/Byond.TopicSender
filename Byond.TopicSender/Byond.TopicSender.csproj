@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>7.0.4</Version>
+    <Version>7.0.5</Version>
     <Authors>Jordan Dominion</Authors>
     <Description>Library for asynchronously sending valid topic strings to /world/Topic() in BYOND servers.</Description>
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
@@ -30,7 +30,7 @@
     <DocumentationFile>bin\Release\net6.0\Byond.TopicSender.xml</DocumentationFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+  <PropertyGroup Condition="'$(APPVEYOR)' == 'True'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
