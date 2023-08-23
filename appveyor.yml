@@ -6,7 +6,6 @@ environment:
 skip_branch_with_pr: true
 image: Visual Studio 2022
 configuration:
-  - Debug
   - Release
 shallow_clone: true
 install:
