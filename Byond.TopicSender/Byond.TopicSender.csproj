@@ -30,7 +30,7 @@
     <DocumentationFile>bin\Release\net6.0\Byond.TopicSender.xml</DocumentationFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(APPVEYOR)' == 'True'">
+  <PropertyGroup Condition="'$(CUSTOM_CI_FLAG)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
