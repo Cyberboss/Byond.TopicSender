@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>7.0.6</Version>
+    <Version>7.0.7</Version>
     <Authors>Jordan Dominion</Authors>
     <Description>Library for asynchronously sending valid topic strings to /world/Topic() in BYOND servers.</Description>
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
