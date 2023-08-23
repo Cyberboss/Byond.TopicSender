@@ -25,7 +25,7 @@ jobs:
     - name: Publish Tgstation.Server.Client to NuGet
       uses: alirezanet/publish-nuget@e276c40afeb2a154046f0997820f2a9ea74832d9 # v3.1.0
       with:
-        PROJECT_FILE_PATH: src/Tgstation.Server.Client/Tgstation.Server.Client.csproj
+        PROJECT_FILE_PATH: Byond.TopicSender/Byond.TopicSender.csproj
         TAG_COMMIT: false
         INCLUDE_SYMBOLS: true
         NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
