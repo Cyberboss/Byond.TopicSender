@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>7.0.8</Version>
+    <Version>7.1.0</Version>
     <Authors>Jordan Dominion</Authors>
     <Description>Library for asynchronously sending valid topic strings to /world/Topic() in BYOND servers.</Description>
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cyberboss/Byond.TopicSender</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <Copyright>Copyright (c) Jordan Brown 2018</Copyright>
-    <PackageReleaseNotes>Enabled source link.</PackageReleaseNotes>
+    <PackageReleaseNotes>Multi-targeted across .NET 6-8. Fixed issue with partial reads.</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>byond topic packet sender</PackageTags>
     <IncludeSymbols>true</IncludeSymbols>
@@ -22,12 +22,12 @@
     <CodeAnalysisRuleSet>analyzers.ruleset</CodeAnalysisRuleSet>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <DocumentationFile>bin\Release\net6.0\Byond.TopicSender.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
