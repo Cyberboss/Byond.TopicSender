@@ -158,19 +158,29 @@ namespace Byond.TopicSender
 				TopicResponseHeader? header = null;
 				var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
+				var peekedAfterHeader = false;
 				using var receiveCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 				receiveCts.CancelAfter(socketParameters.ReceiveTimeout);
 				for (var chunkCount = 1; receiveOffset < returnedData.Length; ++chunkCount)
 				{
-					logger.LogTrace("Receive chunk {chunk}, offset {receiveOffset}", chunkCount, receiveOffset);
+					var peeking = !peekedAfterHeader && header != null;
+					peekedAfterHeader |= peeking;
+
+					logger.LogTrace(
+						"{verb} chunk {chunk}, offset {receiveOffset}",
+						peeking
+							? "Peek"
+							: "Receive",
+						chunkCount,
+						receiveOffset);
 
 					int read;
 					try
 					{
 						read = await socket.ReceiveAsync(
 							new Memory<byte>(returnedData, receiveOffset, returnedData.Length - receiveOffset),
-							isWindows && header == null
-								? SocketFlags.Partial
+							peeking
+								? SocketFlags.Peek
 								: SocketFlags.None,
 							receiveCts.Token);
 					}
@@ -188,7 +198,7 @@ namespace Byond.TopicSender
 					}
 
 					receiveOffset += read;
-					if (read == 0)
+					if (!peeking && read == 0)
 					{
 						if (receiveOffset < returnedData.Length)
 							logger.LogDebug("Zero bytes read at offset {receiveOffset} before expected length of {expectedLength}.", receiveOffset, returnedData.Length);
