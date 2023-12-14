@@ -26,7 +26,7 @@ namespace Byond.TopicSender
 			if (data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			if (data.Length < HeaderLength || data[1] != 0x83)
+			if (data.Length < HeaderLength || data[0] != 0x0 || data[1] != 0x83)
 				return;
 
 			var receiveLengthBytes = new byte[sizeof(ushort)];
