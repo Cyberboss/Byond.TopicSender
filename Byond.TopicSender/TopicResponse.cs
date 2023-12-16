@@ -7,7 +7,7 @@ namespace Byond.TopicSender
 	/// <summary>
 	/// Represents a topic response from BYOND.
 	/// </summary>
-	public sealed class TopicResponse : TopicResponseHeader
+	public sealed record TopicResponse : TopicResponseHeader
 	{
 		/// <summary>
 		/// The <see cref="TopicResponseType"/> of the header.

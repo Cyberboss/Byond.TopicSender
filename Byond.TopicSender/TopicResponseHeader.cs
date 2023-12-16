@@ -5,7 +5,7 @@ namespace Byond.TopicSender
 	/// <summary>
 	/// Represents the header data of a <see cref="TopicResponse"/>.
 	/// </summary>
-	public class TopicResponseHeader
+	public record TopicResponseHeader
 	{
 		/// <summary>
 		/// The <see cref="Array.Length"/> of a topic response header.

@@ -33,17 +33,16 @@ namespace Byond.TopicSender
 		/// </summary>
 		/// <param name="socketParameters">The <see cref="SocketParameters"/> to use.</param>
 		/// <param name="logger">The optional <see cref="ILogger"/> to use.</param>
-		public TopicClient(SocketParameters socketParameters, ILogger? logger = null)
+		public TopicClient(SocketParameters socketParameters, ILogger? logger)
 		{
-			this.socketParameters = socketParameters ?? throw new ArgumentNullException(nameof(socketParameters));
+			this.socketParameters = socketParameters;
 			this.logger = logger ?? new NullLogger<TopicClient>();
 		}
 
 		/// <inheritdoc />
-		public async Task<TopicResponse> SendTopic(string destinationServer, string queryString, ushort port, CancellationToken cancellationToken = default)
+		public async ValueTask<TopicResponse> SendTopic(string destinationServer, string queryString, ushort port, CancellationToken cancellationToken = default)
 		{
-			if (destinationServer == null)
-				throw new ArgumentNullException(nameof(destinationServer));
+			ArgumentNullException.ThrowIfNull(destinationServer);
 			var hostEntries = await Dns.GetHostAddressesAsync(destinationServer, cancellationToken).ConfigureAwait(false);
 
 			// pick the first IPV4 entry
@@ -51,25 +50,24 @@ namespace Byond.TopicSender
 		}
 
 		/// <inheritdoc />
-		public Task<TopicResponse> SendTopic(IPAddress address, string queryString, ushort port, CancellationToken cancellationToken = default)
+		public ValueTask<TopicResponse> SendTopic(IPAddress address, string queryString, ushort port, CancellationToken cancellationToken = default)
 		{
-			if (address == null)
-				throw new ArgumentNullException(nameof(address));
+			ArgumentNullException.ThrowIfNull(address);
+
 			return SendTopic(new IPEndPoint(address, port), queryString, cancellationToken);
 		}
 
 		/// <inheritdoc />
-		public async Task<TopicResponse> SendTopic(IPEndPoint endPoint, string queryString, CancellationToken cancellationToken = default)
+		public async ValueTask<TopicResponse> SendTopic(IPEndPoint endPoint, string queryString, CancellationToken cancellationToken = default)
 		{
-			if (endPoint == null)
-				throw new ArgumentNullException(nameof(endPoint));
-			if (queryString == null)
-				throw new ArgumentNullException(nameof(queryString));
+			ArgumentNullException.ThrowIfNull(endPoint);
+			ArgumentNullException.ThrowIfNull(queryString);
 
 			using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			{
 				// prepare
-				var needsQueryToken = queryString.Length == 0 || queryString[0] != '?';
+				const char QueryToken = '?';
+				var needsQueryToken = queryString.Length == 0 || queryString[0] != QueryToken;
 
 				var queryStringByteLength = Encoding.UTF8.GetByteCount(queryString);
 
@@ -119,7 +117,7 @@ namespace Byond.TopicSender
 						writer.Write((byte)0);
 
 					if (needsQueryToken)
-						writer.Write('?');
+						writer.Write(QueryToken);
 
 					writer.Seek(queryStringByteLength, SeekOrigin.Current);
 					writer.Write((byte)0);
@@ -197,12 +195,16 @@ namespace Byond.TopicSender
 						throw;
 					}
 
-					receiveOffset += read;
-					if (!peeking && read == 0)
+					if (!peeking)
 					{
-						if (receiveOffset < returnedData.Length)
-							logger.LogDebug("Zero bytes read at offset {receiveOffset} before expected length of {expectedLength}.", receiveOffset, returnedData.Length);
-						break;
+						if (read == 0)
+						{
+							if (receiveOffset < returnedData.Length)
+								logger.LogDebug("Zero bytes read at offset {receiveOffset} before expected length of {expectedLength}.", receiveOffset, returnedData.Length);
+							break;
+						}
+
+						receiveOffset += read;
 					}
 
 					if (header == null && receiveOffset >= TopicResponseHeader.HeaderLength)

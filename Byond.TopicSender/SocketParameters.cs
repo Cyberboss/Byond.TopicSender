@@ -5,7 +5,7 @@ namespace Byond.TopicSender
 	/// <summary>
 	/// <see cref="System.Net.Sockets.Socket"/> parameters used by the <see cref="TopicClient"/>.
 	/// </summary>
-	public sealed class SocketParameters
+	public readonly record struct SocketParameters
 	{
 		/// <summary>
 		/// The timeout for the send operation.

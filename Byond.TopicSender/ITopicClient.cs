@@ -16,8 +16,8 @@ namespace Byond.TopicSender
 		/// <param name="queryString">The query string to send.</param>
 		/// <param name="port">The port of the <paramref name="destinationServer"/>.</param>
 		/// <param name="cancellationToken">The <see cref="CancellationToken"/> for the operation.</param>
-		/// <returns>A <see cref="Task{TResult}"/> resulting in the returned <see cref="TopicResponse"/> from the server.</returns>
-		Task<TopicResponse> SendTopic(string destinationServer, string queryString, ushort port, CancellationToken cancellationToken = default);
+		/// <returns>A <see cref="ValueTask{TResult}"/> resulting in the returned <see cref="TopicResponse"/> from the server.</returns>
+		ValueTask<TopicResponse> SendTopic(string destinationServer, string queryString, ushort port, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Send a <paramref name="queryString"/> to the /world/Topic of a server at a given <paramref name="address"/>.
@@ -26,8 +26,8 @@ namespace Byond.TopicSender
 		/// <param name="queryString">The query string to send.</param>
 		/// <param name="port">The port of the <paramref name="address"/>.</param>
 		/// <param name="cancellationToken">The <see cref="CancellationToken"/> for the operation.</param>
-		/// <returns>A <see cref="Task{TResult}"/> resulting in the returned <see cref="TopicResponse"/> from the server.</returns>
-		Task<TopicResponse> SendTopic(IPAddress address, string queryString, ushort port, CancellationToken cancellationToken = default);
+		/// <returns>A <see cref="ValueTask{TResult}"/> resulting in the returned <see cref="TopicResponse"/> from the server.</returns>
+		ValueTask<TopicResponse> SendTopic(IPAddress address, string queryString, ushort port, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Send a <paramref name="queryString"/> to the /world/Topic of a server at a given <paramref name="endPoint"/>.
@@ -35,8 +35,8 @@ namespace Byond.TopicSender
 		/// <param name="endPoint">The <see cref="IPEndPoint"/> of the server.</param>
 		/// <param name="queryString">The query string to send.</param>
 		/// <param name="cancellationToken">The <see cref="CancellationToken"/> for the operation.</param>
-		/// <returns>A <see cref="Task{TResult}"/> resulting in the returned <see cref="TopicResponse"/> from the server.</returns>
-		Task<TopicResponse> SendTopic(IPEndPoint endPoint, string queryString, CancellationToken cancellationToken = default);
+		/// <returns>A <see cref="ValueTask{TResult}"/> resulting in the returned <see cref="TopicResponse"/> from the server.</returns>
+		ValueTask<TopicResponse> SendTopic(IPEndPoint endPoint, string queryString, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Properly escapes characters for a Byond Topic() packet. Performs URL encoding. See http://www.byond.com/docs/ref/info.html#/proc/list2params.
