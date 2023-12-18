@@ -33,7 +33,7 @@ namespace Byond.TopicSender
 		/// </summary>
 		/// <param name="socketParameters">The <see cref="SocketParameters"/> to use.</param>
 		/// <param name="logger">The optional <see cref="ILogger"/> to use.</param>
-		public TopicClient(SocketParameters socketParameters, ILogger? logger)
+		public TopicClient(SocketParameters socketParameters, ILogger? logger = null)
 		{
 			this.socketParameters = socketParameters;
 			this.logger = logger ?? new NullLogger<TopicClient>();

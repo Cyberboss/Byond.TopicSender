@@ -3,14 +3,14 @@
   <PropertyGroup>
     <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>8.0.0</Version>
+    <Version>8.0.1</Version>
     <Authors>Jordan Dominion</Authors>
     <Description>Library for asynchronously sending valid topic strings to /world/Topic() in BYOND servers.</Description>
     <PackageProjectUrl>https://Cyberboss.github.io/Byond.TopicSender</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cyberboss/Byond.TopicSender</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <Copyright>Copyright (c) Jordan Brown 2018</Copyright>
-    <PackageReleaseNotes>Fixed potential double data reads occurring. Switched to using ValueTask return values. Switched to using records ans d structs where appropriate. Updated Microsoft packages to version 8.</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed regression removing default `null` for `TopicClient`'s `logger` constructor parameter.</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>byond topic packet sender</PackageTags>
     <IncludeSymbols>true</IncludeSymbols>
